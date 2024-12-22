@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результаты прогноза погоды</title>
+    <link rel="stylesheet" href="https://codepen.io/chriddyp/pen/brBPwZ.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4A90E2;
+        }
+        h2 {
+            color: #2E86C1;
+            border-bottom: 2px solid #2E86C1;
+            padding-bottom: 10px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 15px;
+            background: #fff;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .date {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #D35400;
+        }
+        .forecast {
+            font-style: italic;
+        }
+        .interactive-graph {
+            margin-top: 30px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background: #ffffff;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Прогноз погоды</h1>
+    {% if weather_condition %}
+        <p>{{ weather_condition }}</p>
+    {% else %}
+        <h2>Прогноз для городов:</h2>
+        <ul>
+            {% for city, forecasts in weather_data.items() %}
+                <li>{{ city }}:
+                    <ul>
+                        {% for forecast in forecasts %}
+                            <li>
+                                <span class="date">{{ forecast.date }}</span><br>
+                                <span class="forecast">Температура: {{ forecast.temperature }} °C,<br>
+                                Ветер: {{ forecast.wind_speed }} км/ч,<br>
+                                Вероятность осадков: {{ forecast.rain_probability }}%</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="interactive-graph">
+        <h2>Интерактивный график</h2>
+        <div id="dash-container">
+            {% include 'dash.html' %}
+        </div>
+    </div>
+</body>
+</html>

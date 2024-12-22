@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Прогноз погоды</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4A90E2;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #e1e1e1;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #357ABD;
+        }
+        #intermediate-cities {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Введите города</h1>
+    <form action="/weather" method="post">
+        <label for="start_city">Начальный город:</label>
+        <input type="text" id="start_city" name="start_city" required>
+
+        <label for="end_city">Конечный город:</label>
+        <input type="text" id="end_city" name="end_city" required>
+
+        <div id="intermediate-cities">
+            <label for="intermediate_city_1">Промежуточный город:</label>
+            <input type="text" id="intermediate_city_1" name="intermediate_city">
+        </div>
+
+        <button type="button" onclick="addIntermediateCity()">Добавить промежуточный город</button>
+        <button type="submit">Получить прогноз</button>
+    </form>
+
+    <script>
+        let cityCount = 1;
+
+        function addIntermediateCity() {
+            cityCount++;
+            const div = document.createElement('div');
+            div.innerHTML = `<label for="intermediate_city_${cityCount}">Промежуточный город:</label>
+                             <input type="text" id="intermediate_city_${cityCount}" name="intermediate_city">`;
+            document.getElementById('intermediate-cities').appendChild(div);
+        }
+    </script>
+</body>
+</html>
