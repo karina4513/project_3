@@ -7,21 +7,13 @@ from dash import dcc, ctx
 from dash.dependencies import Input, Output
 import pandas as pd
 
-# Ваш ключ API AccuWeather
 API_KEY = 'yGBhYW3XIclR9eAdAc275UgcBecZXy6i'
 
-# Инициализация Flask приложения
 app = Flask(__name__)
-
-# Инициализация Dash внутри Flask
 dash_app = dash.Dash(__name__, server=app, url_base_pathname='/dash/')
-
-# Глобальная переменная для хранения списка городов
 cities = []
 
 import logging
-
-# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
 def get_coordinates(city_name):
@@ -50,9 +42,6 @@ def get_coordinates(city_name):
         return None, None, f"Ошибка при подключении к серверу: {str(e)}"
 
 
-
-
-# Функция для получения ключа местоположения
 def get_location_key(latitude, longitude):
     url = 'http://dataservice.accuweather.com/locations/v1/cities/geoposition/search'
     params = {
@@ -114,41 +103,34 @@ def index():
 
 @app.route('/weather', methods=['POST'])
 def weather():
-    global cities  # Указываем, что мы используем глобальную переменную
+    global cities 
     start_city = request.form.get('start_city')
     end_city = request.form.get('end_city')
     intermediate_cities = request.form.getlist('intermediate_city')
 
-    # Собираем все города в один список
     cities = [start_city] + intermediate_cities + [end_city]
-
-    # Проверка на пустоту списка
     if not cities or all(city.strip() == "" for city in cities):
         return render_template('result.html', weather_condition="Пожалуйста, введите хотя бы один город.")
 
     weather_data = {}
 
     for city in cities:
-        # Получаем координаты для каждого города
+
         latitude, longitude, error_message = get_coordinates(city)
         if error_message:
             return render_template('result.html', weather_condition=error_message)
 
-        # Получаем ключ местоположения
         location_key = get_location_key(latitude, longitude)
         if not location_key:
             return render_template('result.html',
                                    weather_condition=f"Не удалось получить ключ местоположения для {city}")
 
-        # Получаем прогноз погоды
         forecast = get_forecast(location_key)
         if not forecast:
             return render_template('result.html', weather_condition="Ошибка при получении прогноза погоды")
 
-        # Извлекаем данные о погоде
         weather_data[city] = [extract_weather_parameters(day) for day in forecast['DailyForecasts']]
 
-    # Возвращаем результаты в шаблон, включая список городов
     return render_template('result.html', weather_data=weather_data, cities=cities)
 
 
@@ -161,7 +143,7 @@ dash_app.layout = html.Div([
             {'label': '5 дней', 'value': 5},
             {'label': '7 дней', 'value': 7}
         ],
-        value=5,  # Значение по умолчанию
+        value=5,  
         labelStyle={'display': 'inline-block'}
     ),
     dcc.Checklist(
@@ -171,10 +153,10 @@ dash_app.layout = html.Div([
             {'label': 'Скорость ветра', 'value': 'wind_speed'},
             {'label': 'Вероятность осадков', 'value': 'rain_probability'}
         ],
-        value=['temperature'],  # Значение по умолчанию
+        value=['temperature'],  
         inline=True
     ),
-    dcc.Graph(id='weather-graph')  # График для отображения погоды
+    dcc.Graph(id='weather-graph')  
 ])
 
 
@@ -191,62 +173,51 @@ def update_graph(days, selected_parameters):
     all_weather_data = []
 
     for city in cities:
-        # Получаем данные для каждого города
         latitude, longitude, error_message = get_coordinates(city)
         if error_message:
             print(f"Ошибка получения координат для города {city}: {error_message}")
-            continue  # Пропускаем город, если произошла ошибка
-
+            continue  
         location_key = get_location_key(latitude, longitude)
         if not location_key:
             print(f"Не удалось получить ключ местоположения для города {city}")
-            continue  # Пропускаем город, если ключ не получен
+            continue 
 
         forecast = get_forecast(location_key)
         if not forecast:
             print(f"Ошибка при получении прогноза погоды для города {city}")
-            continue  # Пропускаем город, если прогноз не получен
+            continue 
 
-        # Извлекаем данные о погоде
         weather_data = [extract_weather_parameters(day) for day in forecast['DailyForecasts'][:days]]
         days_list = [day['Date'] for day in forecast['DailyForecasts'][:days]]
 
-        # Проверка, что данные о погоде не пустые
         if not weather_data:
             print(f"Нет данных о погоде для города {city}")
-            continue  # Пропускаем город, если нет данных
+            continue  
 
-        # Добавляем данные в общий список
         for day_data in weather_data:
-            day_data['city'] = city  # Добавляем название города
+            day_data['city'] = city  
             all_weather_data.append(day_data)
 
-    # Проверка, что данные не пустые
     if not all_weather_data:
         print("Нет данных для отображения на графике.")
         return px.line(title="Нет данных для отображения")
 
-    # Создаем DataFrame для построения графиков
     df = pd.DataFrame(all_weather_data)
     df['Date'] = pd.to_datetime(df['date'])
 
-    # Проверка содержимого DataFrame
-    print("Данные для графика:", df)
+    print("Данные:", df)
 
-    # Проверка наличия выбранных параметров
     for param in selected_parameters:
         if param not in df.columns:
             print(f"Параметр {param} отсутствует в данных.")
             return px.line(title="Нет данных для отображения")
 
-    # Создаем график с выбранными параметрами
     fig = px.line(df, x='Date', y=selected_parameters,
-                  color='city',  # Используем цвет для различия городов
+                  color='city',  
                   title='Прогноз погоды для городов',
                   labels={'value': 'Значение', 'variable': 'Параметр'},
                   markers=True)
 
-    # Добавляем всплывающие подсказки
     fig.update_traces(mode='lines+markers', hovertemplate='%{x}: %{y:.2f}')
 
     return fig
